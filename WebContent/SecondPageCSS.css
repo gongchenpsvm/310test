@@ -1,0 +1,38 @@
+@charset "UTF-8";
+
+p{
+	text-align: center;
+	font-size: 24px;
+	color: black;
+}
+Build Another Collage{
+	background-color: 6A6968;
+}
+buildCollageAttributes{
+	text-align: center;
+}
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: BEBBBB;
+    opacity: 1; /* Firefox */
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+    color: BEBBBB;
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+    color: BEBBBB;
+}
+.horizontal-scroll-wrapper {
+  width: 200px;
+  height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transform: rotate(-90deg);
+  transform-origin: right top;
+}
+.horizontal-scroll-wrapper > div {
+  width: 100px;
+  height: 100px;
+  transform: rotate(90deg);
+}
