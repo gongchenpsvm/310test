@@ -26,7 +26,7 @@ import java.io.InputStreamReader;
 import java.io.Reader.*;
 
 public class Server {
-	
+	public final static int numImages = 80;
 	private List<BufferedImage> imagesList;
 	private List<BufferedImage> prevCollageList;
 	private BufferedImage prevCollage;
@@ -57,7 +57,7 @@ public class Server {
 		  int indexResult = 1;
 		  int numImagesSaved = 0;
 		  //CONDITION used to make sure we grab exactly 30 images
-		  while (numImagesSaved < 60) {
+		  while (numImagesSaved < numImages) {
 			  //all parameters are put at the end of the url
 			  URL url = new URL ("https://www.googleapis.com/customsearch/v1?key=" +key+ "&cx=" +cx+ "&q=" +qry + "&searchType="+searchType+"&start="+indexResult + "&num=1");//);
 			  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -104,27 +104,11 @@ public class Server {
 		at.rotate(Math.toRadians (-45 + Math.random()*90), locationX0, locationY0);
 		//pause here
 		Graphics2D g = collage.createGraphics();
-		
-		/*project 2*/
-//		FontRenderContext frc = g.getFontRenderContext();
-//		Font f = new Font("Helvetica", 1, 320);
-//		String s = new String("Yosemite");
-//		TextLayout textTl = new TextLayout(s, f, frc);
-//		AffineTransform transform = new AffineTransform();
-//		Shape outline = textTl.getOutline(null);
-//		Rectangle rect = outline.getBounds();
-//		transform = g.getTransform();
-//		transform.translate(1800/2-(rect.width/2), 900/2+(rect.height/2));
-//		g.transform(transform);
-//		g.setColor(Color.blue);
-//		//g.draw(outline);   
-//		g.setClip(outline);
-//		g.drawImage(this.imagesList.get(0), rect.x, rect.y, rect.width, rect.height, null);
 
 
 		//Make the first image background of the collage
 		//g.drawImage(this.imagesList.get(0), 0, 0, 1800, 900, 0, 0, this.imagesList.get(0).getWidth(), this.imagesList.get(0).getHeight(), null);
-		for (int i = 0; i < 60; i++) {
+		for (int i = 0; i < numImages; i++) {
 			//Set up the small image with no image yet
 			BufferedImage smallImage = new BufferedImage(241, 125,BufferedImage.TYPE_INT_RGB);
 			Graphics2D gToScaleDown = smallImage.createGraphics();
@@ -138,29 +122,11 @@ public class Server {
 			double locationX = smallImage.getWidth() / 2;//find center of an image
 			double locationY = smallImage.getHeight() / 2;
 			//IMPORTANT translate must be before rotate 
-			tx.translate(Math.random()*1800, Math.random()* 900);//Move the small images away from the origin
+			tx.translate(150 + Math.random()*1250, Math.random()* 900);//Move the small images away from the origin
 			tx.rotate(Math.toRadians (-45 + Math.random()*90), locationX, locationY);//rotate around the center
 			g.drawImage(smallImage, tx, null);//draw with transformation 
 		}
-		//for project 2
-//		int alpha = 0; //
-//		Color textColor = new Color(0, 0, 0, alpha);
-//		Color bgColor = Color.pink;
-//		g.setColor(textColor);
-//		g.setFont(new Font("Serif", Font.BOLD, 50));
-//		String s = "FUCLA";
-//		
-//		FontMetrics fm = g.getFontMetrics();
-//        Rectangle2D rect = fm.getStringBounds(s, g);
-//
-//        g.setColor(bgColor);
-//        g.fillRect(900,
-//                   450 - fm.getAscent(),
-//                   (int) rect.getWidth(),
-//                   (int) rect.getHeight());
-//
-//        g.setColor(textColor);
-		
+	
         //g.drawImage(img, r.x, r.y, r.width, r.height, this);
 		g.dispose();//Release all resources used by g
 		//for local test
@@ -179,8 +145,8 @@ public class Server {
 	}
 	//For local test
 	private void outputImages() {
-		if (imagesList.size() == 60) {
-			for (int i = 0; i < 60; i++) {
+		if (imagesList.size() == numImages) {
+			for (int i = 0; i < numImages; i++) {
 				try {
 					ImageIO.write(imagesList.get(i), "jpg",new File("/Users/gongchen/Desktop/310imagesFolder/image" + i + ".jpg"));
 				} catch (IOException e) {
@@ -191,25 +157,36 @@ public class Server {
 		}
 	}
 	public BufferedImage generateTextImage(String s) {
-		        int w = 1800;
-		        int h = 900;
-		        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-		        Graphics2D g2d = img.createGraphics();
-		        g2d.setPaint(Color.black);
-		        g2d.setFont(new Font("Serif", Font.BOLD, 600));
-		        FontMetrics fm = g2d.getFontMetrics();
-		        int x = img.getWidth() - fm.stringWidth(s);
-		        int y = fm.getHeight();
-		        g2d.drawString(s, x, y);
-		        g2d.dispose();
-		        return img;
+		    int w = 1800;
+		    int h = 900;
+			BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+			           
+	        Graphics2D g2d = img.createGraphics();
+	        g2d.setPaint(Color.black);
+	        int size = s.length();
+	        if(size >= 3) {
+	          g2d.setFont(new Font("Serif", Font.BOLD, h*3/size));
+	        }
+	        else {
+	          g2d.setFont(new Font("Serif", Font.BOLD, h+100));
+	        }
+	        FontMetrics fm = g2d.getFontMetrics();
+	        int x = img.getWidth()/2 - fm.stringWidth(s)/2;
+	        int y = img.getHeight()/2 + fm.getAscent()/2 - fm.getDescent()/2;// + fm.getHeight()/4;
+	        
+	        System.out.println("x: " + x);
+	        System.out.println("y: " + y);
+	
+	        g2d.drawString(s, x, y);
+	        g2d.dispose();
+	        return img;
     }
 	//IMPORTANT after each joinBufferedImage() called, getPrevCollageList() should be called immediately to update the previous collages
 	public List<BufferedImage> getPrevCollageList() {
 		return prevCollageList;
 	}
 	
-	//Grabbed from stackoverflow
+	//Grabbed from stackoverflow "Cut out image in shape of text"
 	public static BufferedImage textEffect(BufferedImage image, BufferedImage text) {
 	    if (image.getWidth() != text.getWidth() ||
 	        image.getHeight() != text.getHeight())
@@ -253,7 +230,7 @@ public class Server {
 //		}
 		//output the letter shape cut image
 		try {
-			ImageIO.write(textEffect(s0.buildCollage(), s0.generateTextImage("a")), "png",new File("/Users/gongchen/Desktop/310imagesFolder/letterShaped" + ".png"));
+			ImageIO.write(textEffect(s0.buildCollage(), s0.generateTextImage("FUCLA")), "png",new File("/Users/gongchen/Desktop/310imagesFolder/letterShaped" + ".png"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
