@@ -175,7 +175,7 @@ public class Server {
 	    		prevCollageList.add(prevCollage);
 	    }
 	    prevCollage = collage;
-		return null;
+		return collage;
 	}
 	//For local test
 	private void outputImages() {
@@ -190,9 +190,49 @@ public class Server {
 			
 		}
 	}
+	public BufferedImage generateTextImage(String s) {
+		        int w = 1800;
+		        int h = 900;
+		        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		        Graphics2D g2d = img.createGraphics();
+		        g2d.setPaint(Color.black);
+		        g2d.setFont(new Font("Serif", Font.BOLD, 600));
+		        FontMetrics fm = g2d.getFontMetrics();
+		        int x = img.getWidth() - fm.stringWidth(s);
+		        int y = fm.getHeight();
+		        g2d.drawString(s, x, y);
+		        g2d.dispose();
+		        return img;
+    }
 	//IMPORTANT after each joinBufferedImage() called, getPrevCollageList() should be called immediately to update the previous collages
 	public List<BufferedImage> getPrevCollageList() {
 		return prevCollageList;
+	}
+	
+	//Grabbed from stackoverflow
+	public static BufferedImage textEffect(BufferedImage image, BufferedImage text) {
+	    if (image.getWidth() != text.getWidth() ||
+	        image.getHeight() != text.getHeight())
+	    {
+	        throw new IllegalArgumentException("Dimensions are not the same!");
+	    }
+	    BufferedImage img = new BufferedImage(image.getWidth(),
+	                                          image.getHeight(),
+	                                          BufferedImage.TYPE_INT_ARGB_PRE);
+
+	    for (int y = 0; y < image.getHeight(); ++y) {
+	        for (int x = 0; x < image.getWidth(); ++x) {
+	           int textPixel = text.getRGB(x, y);
+	           int textAlpha = (textPixel & 0xFF000000);
+	           int sourceRGB = image.getRGB(x, y);
+	           int newAlpha = (int) (((textAlpha >> 24) * (sourceRGB >> 24)) / 255d);
+	           int imgPixel = (newAlpha << 24) |  (sourceRGB & 0x00FFFFFF);
+	           int rgb = imgPixel | textAlpha;
+	           img.setRGB(x, y, rgb);
+
+	        }
+	    }
+	    return img;
 	}
 	
 	public static void main(String[] args) {
@@ -204,8 +244,19 @@ public class Server {
 			e.printStackTrace();
 		}
 		s0.outputImages();
-		s0.buildCollage();
-
+		//s0.buildCollage();
+		//output text shape image
+//		try {
+//			ImageIO.write(s0.generateTextImage("fucla"), "png",new File("/Users/gongchen/Desktop/310imagesFolder/textShape" + ".png"));
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		//output the letter shape cut image
+		try {
+			ImageIO.write(textEffect(s0.buildCollage(), s0.generateTextImage("a")), "png",new File("/Users/gongchen/Desktop/310imagesFolder/letterShaped" + ".png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
 
