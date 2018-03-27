@@ -14,11 +14,14 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.color.ColorSpace;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
+import java.awt.image.WritableRaster;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -94,7 +97,7 @@ public class Server {
 	}
 
 	/*Scale up one image as background. Rest of images are scaled down to display*/
-	public BufferedImage buildCollage() {
+	public BufferedImage buildCollage(int x, int y) {
 		//BufferedImage collage = new BufferedImage(1800, 900,BufferedImage.TYPE_INT_RGB);
 		BufferedImage collage = new BufferedImage(1800, 900, BufferedImage.TYPE_INT_RGB);
 		//Create transformation for the scaled down images
@@ -122,7 +125,7 @@ public class Server {
 			double locationX = smallImage.getWidth() / 2;//find center of an image
 			double locationY = smallImage.getHeight() / 2;
 			//IMPORTANT translate must be before rotate 
-			tx.translate(150 + Math.random()*1250, Math.random()* 900);//Move the small images away from the origin
+			tx.translate(x + Math.random()*1700, Math.random()* 900);//Move the small images away from the origin
 			tx.rotate(Math.toRadians (-45 + Math.random()*90), locationX, locationY);//rotate around the center
 			g.drawImage(smallImage, tx, null);//draw with transformation 
 		}
@@ -156,7 +159,7 @@ public class Server {
 			
 		}
 	}
-	public BufferedImage generateTextImage(String s) {
+	public TextOutputClass generateTextImage(String s) {
 		    int w = 1800;
 		    int h = 900;
 			BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
@@ -179,7 +182,7 @@ public class Server {
 	
 	        g2d.drawString(s, x, y);
 	        g2d.dispose();
-	        return img;
+	        return new TextOutputClass(img, x, y);
     }
 	//IMPORTANT after each joinBufferedImage() called, getPrevCollageList() should be called immediately to update the previous collages
 	public List<BufferedImage> getPrevCollageList() {
@@ -211,7 +214,112 @@ public class Server {
 	    }
 	    return img;
 	}
+	private BufferedImage grayScale(BufferedImage img) {
+		//BufferedImage img = new BufferedImage(imgInput);
+		//get image width and height
+	    int width = img.getWidth();
+	    int height = img.getHeight();
+
+	    //convert to grayscale
+	    for(int y = 0; y < height; y++){
+	      for(int x = 0; x < width; x++){
+	        int p = img.getRGB(x,y);
+
+	        int a = (p>>24)&0xff;
+	        int r = (p>>16)&0xff;
+	        int g = (p>>8)&0xff;
+	        int b = p&0xff;
+            
+	        //calculate average
+	        int avg = (r+g+b)/3;
+
+	        //replace RGB value with avg
+	        p = (a<<24) | (avg<<16) | (avg<<8) | avg;
+
+	        img.setRGB(x, y, p);
+	      }
+	    }
+//		BufferedImage gray = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
+//
+//        // Automatic converstion....
+//        ColorConvertOp op = new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_GRAY), null);
+//        op.filter(img, gray);
+	    try {
+			ImageIO.write(img, "png",new File("/Users/gongchen/Desktop/310imagesFolder/grayscaled" + ".png"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return img;
+	}
 	
+	private BufferedImage sepia(BufferedImage img) {
+		//get width and height of the image
+        int width = img.getWidth();
+        int height = img.getHeight();
+        
+        //convert to sepia
+        for(int y = 0; y < height; y++){
+            for(int x = 0; x < width; x++){
+                int p = img.getRGB(x,y);
+                
+                int a = (p>>24)&0xff;
+                int r = (p>>16)&0xff;
+                int g = (p>>8)&0xff;
+                int b = p&0xff;
+                
+                //calculate tr, tg, tb
+                int tr = (int)(0.393*r + 0.769*g + 0.189*b);
+                int tg = (int)(0.349*r + 0.686*g + 0.168*b);
+                int tb = (int)(0.272*r + 0.534*g + 0.131*b);
+                
+                //check condition
+                if(tr > 255){
+                    r = 255;
+                }else{
+                    r = tr;
+                }
+                
+                if(tg > 255){
+                    g = 255;
+                }else{
+                    g = tg;
+                }
+                
+                if(tb > 255){
+                    b = 255;
+                }else{
+                    b = tb;
+                }
+                
+                //set new RGB value
+                p = (a<<24) | (r<<16) | (g<<8) | b;
+                
+                img.setRGB(x, y, p);
+            }
+        }
+	    try {
+			ImageIO.write(img, "png",new File("/Users/gongchen/Desktop/310imagesFolder/sepia" + ".png"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    return img;
+	}
+	private BufferedImage bw(BufferedImage img) {
+		BufferedImage bw = new BufferedImage(img.getWidth(), img.getHeight(),
+				BufferedImage.TYPE_BYTE_BINARY);
+		Graphics2D g = bw.createGraphics();
+        g.drawImage(img, 0, 0, null);
+        try {
+			ImageIO.write(bw, "png",new File("/Users/gongchen/Desktop/310imagesFolder/bw" + ".png"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return img;
+		
+	}
 	public static void main(String[] args) {
 		Server s0 = new Server();
 		try {
@@ -229,11 +337,38 @@ public class Server {
 //			e.printStackTrace();
 //		}
 		//output the letter shape cut image
+		TextOutputClass toc = s0.generateTextImage("FUCLA");
+		BufferedImage letterShapedCollage = textEffect(s0.buildCollage(toc.getX(), toc.getY()), toc.getBiOutput());
 		try {
-			ImageIO.write(textEffect(s0.buildCollage(), s0.generateTextImage("FUCLA")), "png",new File("/Users/gongchen/Desktop/310imagesFolder/letterShaped" + ".png"));
+			ImageIO.write(letterShapedCollage, "png",new File("/Users/gongchen/Desktop/310imagesFolder/letterShaped" + ".png"));
+			s0.grayScale(letterShapedCollage);
+			s0.sepia(textEffect(s0.buildCollage(toc.getX(), toc.getY()), toc.getBiOutput()));
+			s0.bw(textEffect(s0.buildCollage(toc.getX(), toc.getY()), toc.getBiOutput()));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	//inner class for the return type of generateTextImage
+	 class TextOutputClass {
+		private BufferedImage biOutput;
+		private int x;
+		private int y;
+		public TextOutputClass(BufferedImage biOutput, int x, int y) {
+			super();
+			this.biOutput = biOutput;
+			this.x = x;
+			this.y = y;
+		}
+		public BufferedImage getBiOutput() {
+			return biOutput;
+		}
+		public int getX() {
+			return x;
+		}
+		public int getY() {
+			return y;
+		}
+		
 	}
 }
 
